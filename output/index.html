@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IPO Pulse — Mainboard GMP Tracker</title>
+<style>
+:root {
+    --navy: #061d3d;
+    --navy-2: #082b57;
+    --blue: #1677ff;
+    --green: #27d98b;
+    --text: #12233f;
+    --muted: #61718a;
+    --line: #d7e0eb;
+    --open: #eafbea;
+    --upcoming: #fff9df;
+    --other: #fff0ed;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    background: linear-gradient(135deg, #04172f 0%, #082d58 55%, #071c3b 100%);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.page {
+    max-width: 1900px;
+    margin: 0 auto;
+    padding: 28px;
+}
+.hero {
+    color: white;
+    padding: 18px 8px 24px;
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+    align-items: flex-end;
+}
+.brand {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.brand-icon {
+    font-size: 42px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,.25));
+}
+h1 {
+    margin: 0;
+    font-size: clamp(30px, 3.2vw, 54px);
+    letter-spacing: -1.5px;
+    line-height: 1;
+}
+h1 span { color: var(--green); }
+.subtitle {
+    margin-top: 10px;
+    color: #d9e6f7;
+    font-size: 17px;
+    font-weight: 600;
+}
+.meta {
+    text-align: right;
+    color: #d6e4f5;
+    font-size: 14px;
+    line-height: 1.6;
+}
+.meta strong { color: white; }
+.card {
+    background: #f7fbff;
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 18px 55px rgba(0,0,0,.24);
+}
+.table-scroll {
+    overflow-x: auto;
+}
+table {
+    width: 100%;
+    min-width: 1500px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 15px;
+}
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, #0d4c88, #083d73);
+    color: white;
+    padding: 15px 12px;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,.18);
+    font-size: 12px;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+thead th:nth-child(2) { text-align: left; width: 340px; min-width: 340px; }
+tbody td {
+    padding: 13px 12px;
+    text-align: center;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr.status-open td { background: var(--open); }
+tbody tr.status-upcoming td { background: var(--upcoming); }
+tbody tr.status-other td { background: var(--other); }
+tbody tr:hover td { filter: brightness(.985); }
+.name-cell {
+    text-align: left !important;
+    white-space: normal !important;
+    width: 340px;
+    min-width: 340px;
+}
+.name-wrap {
+    line-height: 1.35;
+}
+.ipo-name {
+    color: #075fe5;
+    text-decoration: none;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+.ipo-name:hover { text-decoration: underline; }
+.badges {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    text-decoration: none;
+}
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: .2px;
+    text-decoration: none;
+}
+.badge-ipo { background: #6f7882; color: white; }
+.badge-open { background: #64a70b; color: white; }
+.badge-upcoming { background: #b39400; color: white; }
+.badge-closed { background: #356db4; color: white; }
+.badge-neutral { background: #e4e9ef; color: #46566b; }
+.badge-allotted {background: #16a34a; color: #ffffff;}
+.rank-cell {
+    width: 70px;
+    min-width: 70px;
+    font-weight: 800;
+}
+.rank-medal { font-size: 24px; }
+.gmp-cell { min-width: 125px; }
+.gmp-value {
+    font-weight: 800;
+    color: #138d5d;
+    font-size: 17px;
+}
+.gmp-percent {
+    margin-top: 2px;
+    color: #172a45;
+    font-size: 13px;
+}
+.profit-cell {
+    color: #078454;
+    font-weight: 850;
+    font-size: 16px;
+}
+.updated-cell {
+    color: #006cff;
+    font-weight: 700;
+}
+.summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 16px;
+    background: #eef5fc;
+    border-top: 1px solid var(--line);
+}
+.metric {
+    background: white;
+    border: 1px solid #d9e4ef;
+    border-radius: 12px;
+    padding: 13px 15px;
+}
+.metric-label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+    font-weight: 750;
+}
+.metric-value {
+    margin-top: 4px;
+    color: var(--navy);
+    font-size: 19px;
+    font-weight: 850;
+}
+.footer {
+    color: #bfd0e5;
+    padding: 18px 5px 4px;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    font-size: 12px;
+}
+.actions {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background: #edf5fd;
+    border-top: 1px solid var(--line);
+}
+.download {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #0b7a52;
+    color: white;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 20px;
+    text-decoration: none;
+    font-weight: 800;
+    box-shadow: 0 7px 18px rgba(11,122,82,.2);
+}
+.download:hover { filter: brightness(1.08); }
+@media (max-width: 800px) {
+    .page { padding: 14px; }
+    .hero { align-items: flex-start; flex-direction: column; }
+    .meta { text-align: left; }
+    .summary { grid-template-columns: 1fr 1fr; }
+    .footer { flex-direction: column; }
+}
+@media print {
+    body { background: white; }
+    .page { max-width: none; padding: 0; }
+    .hero { color: black; }
+    .card { box-shadow: none; }
+    .actions { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+    <header class="hero">
+        <div>
+            <div class="brand">
+                <div class="brand-icon">📈</div>
+                <div>
+                    <h1>IPO <span>PULSE</span></h1>
+                    <div class="subtitle">Mainboard IPO GMP Tracker</div>
+                </div>
+            </div>
+        </div>
+        <div class="meta">
+            <div><strong>Latest Update</strong></div>
+            <div>12 Sep 2026 • 02:28 AM IST</div>
+            <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/PERU_Yash" target="_blank" rel="noopener noreferrer">Peru Yash</a></strong></div>
+        </div>
+    </header>
+
+    <main class="card">
+        <div class="table-scroll">
+            <table id="ipo-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>IPO Name</th>
+                        <th>Sub</th>
+                        <th>Price (₹)</th>
+                        <th>GMP</th>
+                        <th>Lot</th>
+                        <th>Est. Profit (₹)</th>
+                        <th>Open</th>
+                        <th>Close</th>
+                        <th>Allotment Dt</th>
+                        <th>Listing</th>
+                        <th>Updated-On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr class="status-other">
+                <td class="rank-cell"><span class="rank-medal">🥇</span></td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/lcc-projects-ipo/1648/" target="_blank" rel="noopener noreferrer">LCC Projects</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>49.57x</td>
+                <td>₹146</td>
+                <td class="gmp-cell"><div class="gmp-value">₹78</div><div class="gmp-percent">(53.42%)</div></td>
+                <td>102</td>
+                <td class="profit-cell">₹7,956</td>
+                <td>9-Sep</td>
+                <td>11-Sep</td>
+                <td>15-Sep</td>
+                <td>17-Sep</td>
+                <td class="updated-cell">11-Sep 23:35</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell"><span class="rank-medal">🥈</span></td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/pranav-constructions-ipo/1662/" target="_blank" rel="noopener noreferrer">Pranav Constructions</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://ipostatus.kfintech.com/" target="_blank" rel="noopener noreferrer">Allotted</a></div></div></td>
+                <td>126.34x</td>
+                <td>₹124</td>
+                <td class="gmp-cell"><div class="gmp-value">₹49</div><div class="gmp-percent">(39.52%)</div></td>
+                <td>120</td>
+                <td class="profit-cell">₹5,880</td>
+                <td>7-Sep</td>
+                <td>9-Sep</td>
+                <td>10-Sep</td>
+                <td>15-Sep</td>
+                <td class="updated-cell">11-Sep 23:28</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell"><span class="rank-medal">🥉</span></td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/rentomojo-ipo/2231/" target="_blank" rel="noopener noreferrer">Rentomojo</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>72.89x</td>
+                <td>₹404</td>
+                <td class="gmp-cell"><div class="gmp-value">₹148</div><div class="gmp-percent">(36.63%)</div></td>
+                <td>37</td>
+                <td class="profit-cell">₹5,476</td>
+                <td>9-Sep</td>
+                <td>11-Sep</td>
+                <td>15-Sep</td>
+                <td>17-Sep</td>
+                <td class="updated-cell">11-Sep 23:34</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell">4</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/kanohar-electricals-ipo/2119/" target="_blank" rel="noopener noreferrer">Kanohar Electricals</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>90.59x</td>
+                <td>₹632</td>
+                <td class="gmp-cell"><div class="gmp-value">₹232</div><div class="gmp-percent">(36.71%)</div></td>
+                <td>23</td>
+                <td class="profit-cell">₹5,336</td>
+                <td>8-Sep</td>
+                <td>10-Sep</td>
+                <td>11-Sep</td>
+                <td>16-Sep</td>
+                <td class="updated-cell">11-Sep 23:36</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell">5</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/karamtara-engineering-ipo/1622/" target="_blank" rel="noopener noreferrer">Karamtara Engineering</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>66.01x</td>
+                <td>₹254</td>
+                <td class="gmp-cell"><div class="gmp-value">₹67</div><div class="gmp-percent">(26.38%)</div></td>
+                <td>59</td>
+                <td class="profit-cell">₹3,953</td>
+                <td>9-Sep</td>
+                <td>11-Sep</td>
+                <td>15-Sep</td>
+                <td>17-Sep</td>
+                <td class="updated-cell">11-Sep 23:31</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell">6</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/glass-wall-systems-ipo/1879/" target="_blank" rel="noopener noreferrer">Glass Wall Systems</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://in.mpms.mufg.com/Initial_Offer/public-issues.html" target="_blank" rel="noopener noreferrer">Allotted</a></div></div></td>
+                <td>81.65x</td>
+                <td>₹182</td>
+                <td class="gmp-cell"><div class="gmp-value">₹48</div><div class="gmp-percent">(26.37%)</div></td>
+                <td>82</td>
+                <td class="profit-cell">₹3,936</td>
+                <td>8-Sep</td>
+                <td>10-Sep</td>
+                <td>11-Sep</td>
+                <td>16-Sep</td>
+                <td class="updated-cell">11-Sep 23:31</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell">7</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/steamhouse-india-ipo/1823/" target="_blank" rel="noopener noreferrer">Steamhouse</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>32.07x</td>
+                <td>₹81</td>
+                <td class="gmp-cell"><div class="gmp-value">₹21</div><div class="gmp-percent">(25.93%)</div></td>
+                <td>185</td>
+                <td class="profit-cell">₹3,885</td>
+                <td>9-Sep</td>
+                <td>11-Sep</td>
+                <td>15-Sep</td>
+                <td>17-Sep</td>
+                <td class="updated-cell">11-Sep 23:28</td>
+            </tr>
+            
+
+            <tr class="status-upcoming">
+                <td class="rank-cell">8</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/jindal-supreme-ipo/2057/" target="_blank" rel="noopener noreferrer">Jindal Supreme</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
+                <td>-</td>
+                <td>₹93</td>
+                <td class="gmp-cell"><div class="gmp-value">₹21</div><div class="gmp-percent">(22.58%)</div></td>
+                <td>161</td>
+                <td class="profit-cell">₹3,381</td>
+                <td>16-Sep</td>
+                <td>18-Sep</td>
+                <td>21-Sep</td>
+                <td>23-Sep</td>
+                <td class="updated-cell">11-Sep 23:33</td>
+            </tr>
+            
+
+            <tr class="status-upcoming">
+                <td class="rank-cell">9</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/ss-retail-ipo/2076/" target="_blank" rel="noopener noreferrer">SS Retail</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
+                <td>-</td>
+                <td>₹424</td>
+                <td class="gmp-cell"><div class="gmp-value">₹80</div><div class="gmp-percent">(18.87%)</div></td>
+                <td>35</td>
+                <td class="profit-cell">₹2,800</td>
+                <td>16-Sep</td>
+                <td>18-Sep</td>
+                <td>21-Sep</td>
+                <td>23-Sep</td>
+                <td class="updated-cell">11-Sep 23:29</td>
+            </tr>
+            
+
+            <tr class="status-open">
+                <td class="rank-cell">10</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/manika-plastech-ipo/1806/" target="_blank" rel="noopener noreferrer">Manika Plastech</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-open">O</span></div></div></td>
+                <td>1.49x</td>
+                <td>₹43</td>
+                <td class="gmp-cell"><div class="gmp-value">₹7</div><div class="gmp-percent">(16.28%)</div></td>
+                <td>348</td>
+                <td class="profit-cell">₹2,436</td>
+                <td>11-Sep</td>
+                <td>16-Sep</td>
+                <td>17-Sep</td>
+                <td>21-Sep</td>
+                <td class="updated-cell">11-Sep 23:29</td>
+            </tr>
+            
+
+            <tr class="status-open">
+                <td class="rank-cell">11</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/veegaland-developers-ipo/1601/" target="_blank" rel="noopener noreferrer">Veegaland Developers</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-open">O</span></div></div></td>
+                <td>1.25x</td>
+                <td>₹140</td>
+                <td class="gmp-cell"><div class="gmp-value">₹20</div><div class="gmp-percent">(14.29%)</div></td>
+                <td>107</td>
+                <td class="profit-cell">₹2,140</td>
+                <td>10-Sep</td>
+                <td>15-Sep</td>
+                <td>16-Sep</td>
+                <td>18-Sep</td>
+                <td class="updated-cell">11-Sep 23:34</td>
+            </tr>
+            
+
+            <tr class="status-upcoming">
+                <td class="rank-cell">12</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/hero-motors-ipo/1688/" target="_blank" rel="noopener noreferrer">Hero Motors</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
+                <td>-</td>
+                <td>₹84</td>
+                <td class="gmp-cell"><div class="gmp-value">₹10</div><div class="gmp-percent">(11.90%)</div></td>
+                <td>178</td>
+                <td class="profit-cell">₹1,780</td>
+                <td>16-Sep</td>
+                <td>18-Sep</td>
+                <td>21-Sep</td>
+                <td>23-Sep</td>
+                <td class="updated-cell">11-Sep 23:31</td>
+            </tr>
+            
+
+            <tr class="status-upcoming">
+                <td class="rank-cell">13</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/nse-ipo/2305/" target="_blank" rel="noopener noreferrer">NSE</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
+                <td>-</td>
+                <td>₹1,785</td>
+                <td class="gmp-cell"><div class="gmp-value">₹218</div><div class="gmp-percent">(12.21%)</div></td>
+                <td>8</td>
+                <td class="profit-cell">₹1,744</td>
+                <td>17-Sep</td>
+                <td>21-Sep</td>
+                <td>22-Sep</td>
+                <td>24-Sep</td>
+                <td class="updated-cell">11-Sep 23:33</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell">14</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/asset-reconstruction-ipo/1848/" target="_blank" rel="noopener noreferrer">Asset Reconstruction</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>20.1x</td>
+                <td>₹139</td>
+                <td class="gmp-cell"><div class="gmp-value">₹14</div><div class="gmp-percent">(10.43%)</div></td>
+                <td>107</td>
+                <td class="profit-cell">₹1,552</td>
+                <td>9-Sep</td>
+                <td>11-Sep</td>
+                <td>15-Sep</td>
+                <td>17-Sep</td>
+                <td class="updated-cell">11-Sep 23:29</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell">15</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/manipal-payment-and-identity-solutions-ipo/1827/" target="_blank" rel="noopener noreferrer">Manipal Payment and Identity Solutions</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>1.42x</td>
+                <td>₹339</td>
+                <td class="gmp-cell"><div class="gmp-value">₹1</div><div class="gmp-percent">(0.29%)</div></td>
+                <td>44</td>
+                <td class="profit-cell">₹44</td>
+                <td>9-Sep</td>
+                <td>11-Sep</td>
+                <td>15-Sep</td>
+                <td>17-Sep</td>
+                <td class="updated-cell">11-Sep 23:36</td>
+            </tr>
+            
+
+            <tr class="status-upcoming">
+                <td class="rank-cell">16</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/sonaselection-india-ipo/2059/" target="_blank" rel="noopener noreferrer">Sonaselection India</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
+                <td>-</td>
+                <td>₹99</td>
+                <td class="gmp-cell"><div class="gmp-value">—</div><div class="gmp-percent">(0.00%)</div></td>
+                <td>150</td>
+                <td class="profit-cell">₹0</td>
+                <td>17-Sep</td>
+                <td>21-Sep</td>
+                <td>22-Sep</td>
+                <td>24-Sep</td>
+                <td class="updated-cell">11-Sep 23:31</td>
+            </tr>
+            
+
+            <tr class="status-other">
+                <td class="rank-cell">17</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/prasol-chemicals-ipo/2030/" target="_blank" rel="noopener noreferrer">Prasol Chemicals</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
+                <td>3.47x</td>
+                <td>₹676</td>
+                <td class="gmp-cell"><div class="gmp-value">—</div><div class="gmp-percent">(-2.22%)</div></td>
+                <td>22</td>
+                <td class="profit-cell">₹0</td>
+                <td>8-Sep</td>
+                <td>10-Sep</td>
+                <td>11-Sep</td>
+                <td>16-Sep</td>
+                <td class="updated-cell">11-Sep 23:35</td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
+
+        <section class="summary">
+            <div class="metric">
+                <div class="metric-label">Mainboard IPOs</div>
+                <div class="metric-value">17</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Highest Est. Profit / Lot</div>
+                <div class="metric-value">₹7,956</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Lowest Est. Profit / Lot</div>
+                <div class="metric-value">₹0</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Average Est. Profit / Lot</div>
+                <div class="metric-value">₹3,076</div>
+            </div>
+        </section>
+
+        <div class="actions">
+            <button id="dl-png" class="download">
+                ⬇ Download Full Table as PNG
+            </button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/PERU_Yash" target="_blank" rel="noopener noreferrer">Peru Yash</a></strong></div>
+        <div>Data Source: InvestorGain · IPO GMP Live</div>
+        <div>GMP is unofficial and may change at any time.</div>
+    </footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+document.getElementById("dl-png").addEventListener("click", function () {
+  var btn = this;
+  btn.disabled = true;
+html2canvas(document.body, {
+    scale: 2,
+    backgroundColor: "#ffffff",
+    windowWidth: 1550        // tell the clone: "pretend the window is 1280px wide"
+}).then(function (canvas) {
+    var a = document.createElement("a");
+    a.download = "ipo-gmp-report.png";
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+    btn.disabled = false;
+  }).catch(function () {
+    btn.disabled = false;
+  });
+});
+</script>
+</body>
+</html>

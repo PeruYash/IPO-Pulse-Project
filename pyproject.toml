@@ -1,0 +1,11 @@
+[project]
+name = "ipo-pulse-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.13,<5",
+    "requests>=2.32,<3",
+    "tzdata>=2026.3",
+]
