@@ -601,7 +601,7 @@ tbody tr:hover td {{ filter: brightness(.985); }}
                         <th>Est. Profit (₹)</th>
                         <th>Open</th>
                         <th>Close</th>
-                        <th>Allotment Dt</th>
+                        <th>Allot. Dt</th>
                         <th>Listing</th>
                         <th>Updated-On</th>
                     </tr>
