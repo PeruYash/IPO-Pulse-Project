@@ -9,3 +9,4 @@ venv/
 *.png
 *.zip
 uv.lock
+output/index.html
