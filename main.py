@@ -583,7 +583,7 @@ tbody tr:hover td {{ filter: brightness(.985); }}
         <div class="meta">
             <div><strong>Latest Update</strong></div>
             <div>{generated.strftime("%d %b %Y • %I:%M %p IST")}</div>
-            <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/PERU_Yash" target="_blank" rel="noopener noreferrer">Peru Yash</a></strong></div>
+            <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/Darknoob87" target="_blank" rel="noopener noreferrer">Reetin Gupta</a></strong></div>
         </div>
     </header>
 
@@ -639,7 +639,7 @@ tbody tr:hover td {{ filter: brightness(.985); }}
     </main>
 
     <footer class="footer">
-        <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/PERU_Yash" target="_blank" rel="noopener noreferrer">Peru Yash</a></strong></div>
+        <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/Darknoob87" target="_blank" rel="noopener noreferrer">Reetin Gupta</a></strong></div>
         <div>Data Source: InvestorGain · IPO GMP Live</div>
         <div>GMP is unofficial and may change at any time.</div>
     </footer>
