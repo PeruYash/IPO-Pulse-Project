@@ -287,12 +287,27 @@ def render_gmp(row: dict) -> str:
     )
 
 
+def row_data_attrs(row: dict) -> str:
+    """Shared data-* attrs used by client-side sort/filter JS on both the
+    table rows and the mobile cards, so the two stay in sync."""
+    sub_value = parse_number(str(row["sub"])) if row["sub"] not in (None, "—") else None
+    return (
+        f'data-status="{html.escape(str(row["status"]))}" '
+        f'data-rank="{int(row["rank"])}" '
+        f'data-name="{html.escape(str(row["name"]).lower(), quote=True)}" '
+        f'data-sub="{sub_value if sub_value is not None else -1}" '
+        f'data-price="{row["price"] if row["price"] is not None else -1}" '
+        f'data-gmp="{row["gmp_amount"]}" '
+        f'data-profit="{row["profit"]}"'
+    )
+
+
 def render_table(rows: list[dict]) -> str:
     body = []
     for row in rows:
         body.append(
             f"""
-            <tr class="{row["status_class"]}">
+            <tr class="{row["status_class"]}" {row_data_attrs(row)}>
                 <td class="rank-cell">{rank_html(int(row["rank"]))}</td>
                 <td class="name-cell">{render_name(row)}</td>
                 <td>{html.escape(str(row["sub"]))}</td>
@@ -310,6 +325,40 @@ def render_table(rows: list[dict]) -> str:
         )
     return "\n".join(body)
 
+
+def render_cards(rows: list[dict]) -> str:
+    """Mobile-only stacked cards. Hidden on desktop and forced hidden during
+    the html2canvas PNG export (which always renders at desktop width)."""
+    cards = []
+    for row in rows:
+        pct = html.escape(str(row["gmp_percentage"]))
+        cards.append(
+            f"""
+            <div class="ipo-card {row["status_class"]}" {row_data_attrs(row)}>
+                <div class="card-top">
+                    <div class="card-rank">{rank_html(int(row["rank"]))}</div>
+                    <div class="card-name-wrap">
+                        {render_name(row)}
+                        <span class="status-pill status-pill-{row["status_class"].replace("status-", "")}">{html.escape(row["status_label"])}</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">{currency(row["profit"])}</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">{html.escape(str(row["sub"]))}</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">{html.escape(str(row["price_display"]))}</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">{html.escape(str(row["gmp_display"]))} <span class="gmp-percent">{pct}</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">{html.escape(str(row["lot"]))}</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">{html.escape(str(row["updated"]))}</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">{html.escape(fmt_date(row["open"]))}</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">{html.escape(fmt_date(row["close"]))}</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">{html.escape(fmt_date(row["boa"]))}</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">{html.escape(fmt_date(row["listing"]))}</span></div>
+                </div>
+            </div>
+            """
+        )
+    return "\n".join(cards)
+
 def build_html(rows: list[dict], generated: datetime) -> str:
     total = len(rows)
     highest = max((row["profit"] for row in rows), default=0)
@@ -317,6 +366,7 @@ def build_html(rows: list[dict], generated: datetime) -> str:
     average = sum(row["profit"] for row in rows) / total if total else 0
 
     table = render_table(rows)
+    cards = render_cards(rows)
 
     return f"""<!doctype html>
 <html lang="en">
@@ -552,12 +602,150 @@ tbody tr:hover td {{ filter: brightness(.985); }}
     box-shadow: 0 7px 18px rgba(11,122,82,.2);
 }}
 .download:hover {{ filter: brightness(1.08); }}
+
+/* ---------- Toolbar: status filter ---------- */
+.toolbar {{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #eef5fc;
+    border-bottom: 1px solid var(--line);
+}}
+.toolbar-label {{
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-right: 2px;
+}}
+.filter-chip {{
+    appearance: none;
+    border: 1px solid #c6d6e8;
+    background: white;
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+}}
+.filter-chip:hover {{ border-color: var(--blue); }}
+.filter-chip.active {{
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+}}
+.result-count {{
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 650;
+}}
+.no-results {{
+    display: none;
+    padding: 30px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 650;
+}}
+
+/* ---------- Sortable headers ---------- */
+th.sortable {{
+    cursor: pointer;
+    user-select: none;
+}}
+th.sortable:hover {{ background: linear-gradient(180deg, #12599c, #0a4685); }}
+.sort-arrow {{
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 10px;
+    opacity: .45;
+}}
+th.sort-asc .sort-arrow, th.sort-desc .sort-arrow {{ opacity: 1; }}
+th.sort-asc .sort-arrow::after {{ content: "▲"; }}
+th.sort-desc .sort-arrow::after {{ content: "▼"; }}
+th:not(.sort-asc):not(.sort-desc) .sort-arrow::after {{ content: "↕"; }}
+
+/* ---------- Mobile cards (hidden on desktop) ---------- */
+.cards {{
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    background: #eef2f6;
+}}
+.ipo-card {{
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    box-shadow: 0 2px 8px rgba(10,30,60,.08);
+    border: 1px solid rgba(10,30,60,.06);
+}}
+.ipo-card.status-open {{ background: var(--open); }}
+.ipo-card.status-upcoming {{ background: var(--upcoming); }}
+.ipo-card.status-other {{ background: var(--other); }}
+.card-top {{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}}
+.card-rank {{ font-weight: 800; font-size: 18px; min-width: 28px; }}
+.card-name-wrap {{ flex: 1; min-width: 0; }}
+.status-pill {{
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}}
+.status-pill-open {{ background: #64a70b; color: white; }}
+.status-pill-upcoming {{ background: #b39400; color: white; }}
+.status-pill-other {{ background: #b4472f; color: white; }}
+.card-grid {{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+}}
+.card-field {{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}}
+.cf-label {{
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    font-weight: 750;
+}}
+.cf-value {{ font-size: 14.5px; font-weight: 650; }}
+.cf-value.gmp-value {{ font-size: 14.5px; }}
+.cf-value .gmp-percent {{ font-size: 12px; font-weight: 600; margin-top: 0; }}
+.card-field.profit-field {{
+    grid-column: 1 / -1;
+    background: rgba(255,255,255,.55);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin: 2px 0 2px;
+}}
+.cf-value.profit-cell {{ font-size: 24px; font-weight: 850; letter-spacing: -.2px; }}
+
 @media (max-width: 800px) {{
     .page {{ padding: 14px; }}
     .hero {{ align-items: flex-start; flex-direction: column; }}
     .meta {{ text-align: left; }}
     .summary {{ grid-template-columns: 1fr 1fr; }}
     .footer {{ flex-direction: column; }}
+    .table-scroll {{ display: none; }}
+    .cards {{ display: flex; }}
+    .toolbar {{ padding: 12px; }}
+    .result-count {{ width: 100%; margin-left: 0; order: 3; }}
 }}
 @media print {{
     body {{ background: white; }}
@@ -566,6 +754,10 @@ tbody tr:hover td {{ filter: brightness(.985); }}
     .card {{ box-shadow: none; }}
     .actions {{ display: none; }}
 }}
+
+/* When html2canvas clones the DOM it re-renders at windowWidth (1550px),
+   so the above max-width:800px rules never apply during PNG export —
+   the exported image always shows the full desktop table, never cards. */
 </style>
 </head>
 <body>
@@ -588,17 +780,26 @@ tbody tr:hover td {{ filter: brightness(.985); }}
     </header>
 
     <main class="card">
+        <div class="toolbar" id="toolbar">
+            <span class="toolbar-label">Filter</span>
+            <button class="filter-chip active" data-filter="ALL">All</button>
+            <button class="filter-chip" data-filter="O">Open</button>
+            <button class="filter-chip" data-filter="U">Upcoming</button>
+            <button class="filter-chip" data-filter="OTHER">Closed</button>
+            <span class="result-count" id="result-count"></span>
+        </div>
+
         <div class="table-scroll">
             <table id="ipo-table">
                 <thead>
                     <tr>
-                        <th>Rank</th>
-                        <th>IPO Name</th>
-                        <th>Sub</th>
-                        <th>Price (₹)</th>
-                        <th>GMP</th>
+                        <th class="sortable" data-sort="rank" data-type="num">Rank<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="name" data-type="text">IPO Name<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="sub" data-type="num">Sub<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="price" data-type="num">Price (₹)<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="gmp" data-type="num">GMP<span class="sort-arrow"></span></th>
                         <th>Lot</th>
-                        <th>Est. Profit (₹)</th>
+                        <th class="sortable" data-sort="profit" data-type="num">Est. Profit (₹)<span class="sort-arrow"></span></th>
                         <th>Open</th>
                         <th>Close</th>
                         <th>Allot. Dt</th>
@@ -606,11 +807,16 @@ tbody tr:hover td {{ filter: brightness(.985); }}
                         <th>Updated-On</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="table-body">
                     {table}
                 </tbody>
             </table>
         </div>
+
+        <div class="cards" id="cards-body">
+            {cards}
+        </div>
+        <div class="no-results" id="no-results">No IPOs match this filter.</div>
 
         <section class="summary">
             <div class="metric">
@@ -646,6 +852,89 @@ tbody tr:hover td {{ filter: brightness(.985); }}
 </div>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+// ---------- Filtering (status) + sorting, kept in sync across
+// the desktop table and the mobile card list ----------
+(function () {{
+  var tbody = document.getElementById("table-body");
+  var cardsBody = document.getElementById("cards-body");
+  var noResults = document.getElementById("no-results");
+  var resultCount = document.getElementById("result-count");
+  var chips = document.querySelectorAll(".filter-chip");
+  var headers = document.querySelectorAll("th.sortable");
+
+  var activeFilter = "ALL";
+  var sortKey = null;
+  var sortDir = 1; // 1 = asc, -1 = desc
+
+  function matchesFilter(status) {{
+    if (activeFilter === "ALL") return true;
+    if (activeFilter === "OTHER") return status !== "O" && status !== "U";
+    return status === activeFilter;
+  }}
+
+  function applyFilter() {{
+    var visibleCount = 0;
+    Array.prototype.forEach.call(tbody.children, function (tr) {{
+      var show = matchesFilter(tr.getAttribute("data-status"));
+      tr.style.display = show ? "" : "none";
+      if (show) visibleCount++;
+    }});
+    Array.prototype.forEach.call(cardsBody.children, function (card) {{
+      var show = matchesFilter(card.getAttribute("data-status"));
+      card.style.display = show ? "" : "none";
+    }});
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+    resultCount.textContent = visibleCount + " of " + tbody.children.length + " IPOs";
+  }}
+
+  chips.forEach(function (chip) {{
+    chip.addEventListener("click", function () {{
+      chips.forEach(function (c) {{ c.classList.remove("active"); }});
+      chip.classList.add("active");
+      activeFilter = chip.getAttribute("data-filter");
+      applyFilter();
+    }});
+  }});
+
+  function sortRows(container, key, type, dir) {{
+    var attr = "data-" + key;
+    var items = Array.prototype.slice.call(container.children);
+    items.sort(function (a, b) {{
+      var av = a.getAttribute(attr);
+      var bv = b.getAttribute(attr);
+      if (type === "num") {{
+        av = parseFloat(av);
+        bv = parseFloat(bv);
+        return (av - bv) * dir;
+      }}
+      return av.localeCompare(bv) * dir;
+    }});
+    items.forEach(function (el) {{ container.appendChild(el); }});
+  }}
+
+  headers.forEach(function (th) {{
+    th.addEventListener("click", function () {{
+      var key = th.getAttribute("data-sort");
+      var type = th.getAttribute("data-type");
+
+      if (sortKey === key) {{
+        sortDir = -sortDir;
+      }} else {{
+        sortKey = key;
+        sortDir = 1;
+      }}
+
+      headers.forEach(function (h) {{ h.classList.remove("sort-asc", "sort-desc"); }});
+      th.classList.add(sortDir === 1 ? "sort-asc" : "sort-desc");
+
+      sortRows(tbody, key, type, sortDir);
+      sortRows(cardsBody, key, type, sortDir);
+    }});
+  }});
+
+  applyFilter();
+}})();
+
 document.getElementById("dl-png").addEventListener("click", function () {{
   var btn = this;
   btn.disabled = true;

@@ -232,12 +232,150 @@ tbody tr:hover td { filter: brightness(.985); }
     box-shadow: 0 7px 18px rgba(11,122,82,.2);
 }
 .download:hover { filter: brightness(1.08); }
+
+/* ---------- Toolbar: status filter ---------- */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #eef5fc;
+    border-bottom: 1px solid var(--line);
+}
+.toolbar-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-right: 2px;
+}
+.filter-chip {
+    appearance: none;
+    border: 1px solid #c6d6e8;
+    background: white;
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+.filter-chip:hover { border-color: var(--blue); }
+.filter-chip.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+}
+.result-count {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 650;
+}
+.no-results {
+    display: none;
+    padding: 30px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 650;
+}
+
+/* ---------- Sortable headers ---------- */
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+th.sortable:hover { background: linear-gradient(180deg, #12599c, #0a4685); }
+.sort-arrow {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 10px;
+    opacity: .45;
+}
+th.sort-asc .sort-arrow, th.sort-desc .sort-arrow { opacity: 1; }
+th.sort-asc .sort-arrow::after { content: "▲"; }
+th.sort-desc .sort-arrow::after { content: "▼"; }
+th:not(.sort-asc):not(.sort-desc) .sort-arrow::after { content: "↕"; }
+
+/* ---------- Mobile cards (hidden on desktop) ---------- */
+.cards {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    background: #eef2f6;
+}
+.ipo-card {
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    box-shadow: 0 2px 8px rgba(10,30,60,.08);
+    border: 1px solid rgba(10,30,60,.06);
+}
+.ipo-card.status-open { background: var(--open); }
+.ipo-card.status-upcoming { background: var(--upcoming); }
+.ipo-card.status-other { background: var(--other); }
+.card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.card-rank { font-weight: 800; font-size: 18px; min-width: 28px; }
+.card-name-wrap { flex: 1; min-width: 0; }
+.status-pill {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}
+.status-pill-open { background: #64a70b; color: white; }
+.status-pill-upcoming { background: #b39400; color: white; }
+.status-pill-other { background: #b4472f; color: white; }
+.card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+}
+.card-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.cf-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    font-weight: 750;
+}
+.cf-value { font-size: 14.5px; font-weight: 650; }
+.cf-value.gmp-value { font-size: 14.5px; }
+.cf-value .gmp-percent { font-size: 12px; font-weight: 600; margin-top: 0; }
+.card-field.profit-field {
+    grid-column: 1 / -1;
+    background: rgba(255,255,255,.55);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin: 2px 0 2px;
+}
+.cf-value.profit-cell { font-size: 24px; font-weight: 850; letter-spacing: -.2px; }
+
 @media (max-width: 800px) {
     .page { padding: 14px; }
     .hero { align-items: flex-start; flex-direction: column; }
     .meta { text-align: left; }
     .summary { grid-template-columns: 1fr 1fr; }
     .footer { flex-direction: column; }
+    .table-scroll { display: none; }
+    .cards { display: flex; }
+    .toolbar { padding: 12px; }
+    .result-count { width: 100%; margin-left: 0; order: 3; }
 }
 @media print {
     body { background: white; }
@@ -246,6 +384,10 @@ tbody tr:hover td { filter: brightness(.985); }
     .card { box-shadow: none; }
     .actions { display: none; }
 }
+
+/* When html2canvas clones the DOM it re-renders at windowWidth (1550px),
+   so the above max-width:800px rules never apply during PNG export —
+   the exported image always shows the full desktop table, never cards. */
 </style>
 </head>
 <body>
@@ -262,23 +404,32 @@ tbody tr:hover td { filter: brightness(.985); }
         </div>
         <div class="meta">
             <div><strong>Latest Update</strong></div>
-            <div>12 Sep 2026 • 03:25 PM IST</div>
-            <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/PERU_Yash" target="_blank" rel="noopener noreferrer">Peru Yash</a></strong></div>
+            <div>13 Sep 2026 • 12:06 AM IST</div>
+            <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/Darknoob87" target="_blank" rel="noopener noreferrer">Reetin Gupta</a></strong></div>
         </div>
     </header>
 
     <main class="card">
+        <div class="toolbar" id="toolbar">
+            <span class="toolbar-label">Filter</span>
+            <button class="filter-chip active" data-filter="ALL">All</button>
+            <button class="filter-chip" data-filter="O">Open</button>
+            <button class="filter-chip" data-filter="U">Upcoming</button>
+            <button class="filter-chip" data-filter="OTHER">Closed</button>
+            <span class="result-count" id="result-count"></span>
+        </div>
+
         <div class="table-scroll">
             <table id="ipo-table">
                 <thead>
                     <tr>
-                        <th>Rank</th>
-                        <th>IPO Name</th>
-                        <th>Sub</th>
-                        <th>Price (₹)</th>
-                        <th>GMP</th>
+                        <th class="sortable" data-sort="rank" data-type="num">Rank<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="name" data-type="text">IPO Name<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="sub" data-type="num">Sub<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="price" data-type="num">Price (₹)<span class="sort-arrow"></span></th>
+                        <th class="sortable" data-sort="gmp" data-type="num">GMP<span class="sort-arrow"></span></th>
                         <th>Lot</th>
-                        <th>Est. Profit (₹)</th>
+                        <th class="sortable" data-sort="profit" data-type="num">Est. Profit (₹)<span class="sort-arrow"></span></th>
                         <th>Open</th>
                         <th>Close</th>
                         <th>Allot. Dt</th>
@@ -286,42 +437,58 @@ tbody tr:hover td { filter: brightness(.985); }
                         <th>Updated-On</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="table-body">
                     
-            <tr class="status-other">
+            <tr class="status-other" data-status="C" data-rank="1" data-name="lcc projects" data-sub="49.57" data-price="146.0" data-gmp="65.0" data-profit="6630.0">
                 <td class="rank-cell"><span class="rank-medal">🥇</span></td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/lcc-projects-ipo/1648/" target="_blank" rel="noopener noreferrer">LCC Projects</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
                 <td>49.57x</td>
                 <td>₹146</td>
-                <td class="gmp-cell"><div class="gmp-value">₹81</div><div class="gmp-percent">(55.48%)</div></td>
+                <td class="gmp-cell"><div class="gmp-value">₹65</div><div class="gmp-percent">(44.52%)</div></td>
                 <td>102</td>
-                <td class="profit-cell">₹8,262</td>
+                <td class="profit-cell">₹6,630</td>
                 <td>9-Sep</td>
                 <td>11-Sep</td>
                 <td>15-Sep</td>
                 <td>17-Sep</td>
-                <td class="updated-cell">12-Sep 14:56</td>
+                <td class="updated-cell">12-Sep 23:29</td>
             </tr>
             
 
-            <tr class="status-other">
+            <tr class="status-other" data-status="C" data-rank="2" data-name="pranav constructions" data-sub="126.34" data-price="124.0" data-gmp="50.0" data-profit="6000.0">
                 <td class="rank-cell"><span class="rank-medal">🥈</span></td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/pranav-constructions-ipo/1662/" target="_blank" rel="noopener noreferrer">Pranav Constructions</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://ipostatus.kfintech.com/" target="_blank" rel="noopener noreferrer">Allotted</a></div></div></td>
+                <td>126.34x</td>
+                <td>₹124</td>
+                <td class="gmp-cell"><div class="gmp-value">₹50</div><div class="gmp-percent">(40.32%)</div></td>
+                <td>120</td>
+                <td class="profit-cell">₹6,000</td>
+                <td>7-Sep</td>
+                <td>9-Sep</td>
+                <td>10-Sep</td>
+                <td>15-Sep</td>
+                <td class="updated-cell">12-Sep 23:29</td>
+            </tr>
+            
+
+            <tr class="status-other" data-status="C" data-rank="3" data-name="rentomojo" data-sub="72.89" data-price="404.0" data-gmp="160.0" data-profit="5920.0">
+                <td class="rank-cell"><span class="rank-medal">🥉</span></td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/rentomojo-ipo/2231/" target="_blank" rel="noopener noreferrer">Rentomojo</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
                 <td>72.89x</td>
                 <td>₹404</td>
-                <td class="gmp-cell"><div class="gmp-value">₹161</div><div class="gmp-percent">(39.85%)</div></td>
+                <td class="gmp-cell"><div class="gmp-value">₹160</div><div class="gmp-percent">(39.60%)</div></td>
                 <td>37</td>
-                <td class="profit-cell">₹5,957</td>
+                <td class="profit-cell">₹5,920</td>
                 <td>9-Sep</td>
                 <td>11-Sep</td>
                 <td>15-Sep</td>
                 <td>17-Sep</td>
-                <td class="updated-cell">12-Sep 14:56</td>
+                <td class="updated-cell">12-Sep 23:37</td>
             </tr>
             
 
-            <tr class="status-other">
-                <td class="rank-cell"><span class="rank-medal">🥉</span></td>
+            <tr class="status-other" data-status="C" data-rank="4" data-name="kanohar electricals" data-sub="90.59" data-price="632.0" data-gmp="240.0" data-profit="5520.0">
+                <td class="rank-cell">4</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/kanohar-electricals-ipo/2119/" target="_blank" rel="noopener noreferrer">Kanohar Electricals</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://in.mpms.mufg.com/Initial_Offer/public-issues.html" target="_blank" rel="noopener noreferrer">Allotted</a></div></div></td>
                 <td>90.59x</td>
                 <td>₹632</td>
@@ -332,27 +499,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>10-Sep</td>
                 <td>11-Sep</td>
                 <td>16-Sep</td>
-                <td class="updated-cell">12-Sep 14:57</td>
+                <td class="updated-cell">12-Sep 23:28</td>
             </tr>
             
 
-            <tr class="status-other">
-                <td class="rank-cell">4</td>
-                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/pranav-constructions-ipo/1662/" target="_blank" rel="noopener noreferrer">Pranav Constructions</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://ipostatus.kfintech.com/" target="_blank" rel="noopener noreferrer">Allotted</a></div></div></td>
-                <td>126.34x</td>
-                <td>₹124</td>
-                <td class="gmp-cell"><div class="gmp-value">₹45</div><div class="gmp-percent">(36.29%)</div></td>
-                <td>120</td>
-                <td class="profit-cell">₹5,400</td>
-                <td>7-Sep</td>
-                <td>9-Sep</td>
-                <td>10-Sep</td>
-                <td>15-Sep</td>
-                <td class="updated-cell">12-Sep 15:01</td>
-            </tr>
-            
-
-            <tr class="status-open">
+            <tr class="status-open" data-status="O" data-rank="5" data-name="manika plastech" data-sub="1.49" data-price="43.0" data-gmp="15.0" data-profit="5220.0">
                 <td class="rank-cell">5</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/manika-plastech-ipo/1806/" target="_blank" rel="noopener noreferrer">Manika Plastech</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-open">O</span></div></div></td>
                 <td>1.49x</td>
@@ -364,11 +515,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>16-Sep</td>
                 <td>17-Sep</td>
                 <td>21-Sep</td>
-                <td class="updated-cell">12-Sep 14:54</td>
+                <td class="updated-cell">12-Sep 23:33</td>
             </tr>
             
 
-            <tr class="status-upcoming">
+            <tr class="status-upcoming" data-status="U" data-rank="6" data-name="hero motors" data-sub="-1" data-price="84.0" data-gmp="24.0" data-profit="4272.0">
                 <td class="rank-cell">6</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/hero-motors-ipo/1688/" target="_blank" rel="noopener noreferrer">Hero Motors</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
                 <td>-</td>
@@ -380,11 +531,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>18-Sep</td>
                 <td>21-Sep</td>
                 <td>23-Sep</td>
-                <td class="updated-cell">12-Sep 15:01</td>
+                <td class="updated-cell">12-Sep 23:31</td>
             </tr>
             
 
-            <tr class="status-other">
+            <tr class="status-other" data-status="C" data-rank="7" data-name="glass wall systems" data-sub="81.65" data-price="182.0" data-gmp="51.0" data-profit="4182.0">
                 <td class="rank-cell">7</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/glass-wall-systems-ipo/1879/" target="_blank" rel="noopener noreferrer">Glass Wall Systems</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://in.mpms.mufg.com/Initial_Offer/public-issues.html" target="_blank" rel="noopener noreferrer">Allotted</a></div></div></td>
                 <td>81.65x</td>
@@ -396,11 +547,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>10-Sep</td>
                 <td>11-Sep</td>
                 <td>16-Sep</td>
-                <td class="updated-cell">12-Sep 14:54</td>
+                <td class="updated-cell">12-Sep 23:28</td>
             </tr>
             
 
-            <tr class="status-other">
+            <tr class="status-other" data-status="C" data-rank="8" data-name="karamtara engineering" data-sub="66.01" data-price="254.0" data-gmp="69.0" data-profit="4071.0">
                 <td class="rank-cell">8</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/karamtara-engineering-ipo/1622/" target="_blank" rel="noopener noreferrer">Karamtara Engineering</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
                 <td>66.01x</td>
@@ -412,12 +563,28 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>11-Sep</td>
                 <td>15-Sep</td>
                 <td>17-Sep</td>
-                <td class="updated-cell">12-Sep 14:55</td>
+                <td class="updated-cell">12-Sep 23:29</td>
             </tr>
             
 
-            <tr class="status-other">
+            <tr class="status-upcoming" data-status="U" data-rank="9" data-name="jindal supreme" data-sub="-1" data-price="93.0" data-gmp="25.0" data-profit="4025.0">
                 <td class="rank-cell">9</td>
+                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/jindal-supreme-ipo/2057/" target="_blank" rel="noopener noreferrer">Jindal Supreme</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
+                <td>-</td>
+                <td>₹93</td>
+                <td class="gmp-cell"><div class="gmp-value">₹25</div><div class="gmp-percent">(26.88%)</div></td>
+                <td>161</td>
+                <td class="profit-cell">₹4,025</td>
+                <td>16-Sep</td>
+                <td>18-Sep</td>
+                <td>21-Sep</td>
+                <td>23-Sep</td>
+                <td class="updated-cell">12-Sep 23:31</td>
+            </tr>
+            
+
+            <tr class="status-other" data-status="C" data-rank="10" data-name="steamhouse" data-sub="32.07" data-price="81.0" data-gmp="21.0" data-profit="3885.0">
+                <td class="rank-cell">10</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/steamhouse-india-ipo/1823/" target="_blank" rel="noopener noreferrer">Steamhouse</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
                 <td>32.07x</td>
                 <td>₹81</td>
@@ -428,12 +595,12 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>11-Sep</td>
                 <td>15-Sep</td>
                 <td>17-Sep</td>
-                <td class="updated-cell">12-Sep 14:57</td>
+                <td class="updated-cell">12-Sep 23:32</td>
             </tr>
             
 
-            <tr class="status-upcoming">
-                <td class="rank-cell">10</td>
+            <tr class="status-upcoming" data-status="U" data-rank="11" data-name="ss retail" data-sub="-1" data-price="424.0" data-gmp="106.0" data-profit="3710.0">
+                <td class="rank-cell">11</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/ss-retail-ipo/2076/" target="_blank" rel="noopener noreferrer">SS Retail</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
                 <td>-</td>
                 <td>₹424</td>
@@ -444,27 +611,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>18-Sep</td>
                 <td>21-Sep</td>
                 <td>23-Sep</td>
-                <td class="updated-cell">12-Sep 15:02</td>
+                <td class="updated-cell">12-Sep 23:36</td>
             </tr>
             
 
-            <tr class="status-upcoming">
-                <td class="rank-cell">11</td>
-                <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/jindal-supreme-ipo/2057/" target="_blank" rel="noopener noreferrer">Jindal Supreme</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
-                <td>-</td>
-                <td>₹93</td>
-                <td class="gmp-cell"><div class="gmp-value">₹21</div><div class="gmp-percent">(22.58%)</div></td>
-                <td>161</td>
-                <td class="profit-cell">₹3,381</td>
-                <td>16-Sep</td>
-                <td>18-Sep</td>
-                <td>21-Sep</td>
-                <td>23-Sep</td>
-                <td class="updated-cell">12-Sep 14:54</td>
-            </tr>
-            
-
-            <tr class="status-upcoming">
+            <tr class="status-upcoming" data-status="U" data-rank="12" data-name="nse" data-sub="-1" data-price="1785.0" data-gmp="208.0" data-profit="1664.0">
                 <td class="rank-cell">12</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/nse-ipo/2305/" target="_blank" rel="noopener noreferrer">NSE</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
                 <td>-</td>
@@ -476,11 +627,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>21-Sep</td>
                 <td>22-Sep</td>
                 <td>24-Sep</td>
-                <td class="updated-cell">12-Sep 14:55</td>
+                <td class="updated-cell">12-Sep 23:30</td>
             </tr>
             
 
-            <tr class="status-open">
+            <tr class="status-open" data-status="O" data-rank="13" data-name="veegaland developers" data-sub="1.25" data-price="140.0" data-gmp="15.0" data-profit="1605.0">
                 <td class="rank-cell">13</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/veegaland-developers-ipo/1601/" target="_blank" rel="noopener noreferrer">Veegaland Developers</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-open">O</span></div></div></td>
                 <td>1.25x</td>
@@ -492,11 +643,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>15-Sep</td>
                 <td>16-Sep</td>
                 <td>18-Sep</td>
-                <td class="updated-cell">12-Sep 14:53</td>
+                <td class="updated-cell">12-Sep 23:29</td>
             </tr>
             
 
-            <tr class="status-other">
+            <tr class="status-other" data-status="C" data-rank="14" data-name="asset reconstruction" data-sub="20.1" data-price="139.0" data-gmp="14.5" data-profit="1551.5">
                 <td class="rank-cell">14</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/asset-reconstruction-ipo/1848/" target="_blank" rel="noopener noreferrer">Asset Reconstruction</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
                 <td>20.1x</td>
@@ -508,11 +659,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>11-Sep</td>
                 <td>15-Sep</td>
                 <td>17-Sep</td>
-                <td class="updated-cell">12-Sep 14:54</td>
+                <td class="updated-cell">12-Sep 23:31</td>
             </tr>
             
 
-            <tr class="status-other">
+            <tr class="status-other" data-status="C" data-rank="15" data-name="manipal payment and identity solutions" data-sub="1.42" data-price="339.0" data-gmp="1.0" data-profit="44.0">
                 <td class="rank-cell">15</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/manipal-payment-and-identity-solutions-ipo/1827/" target="_blank" rel="noopener noreferrer">Manipal Payment and Identity Solutions</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div></td>
                 <td>1.42x</td>
@@ -524,11 +675,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>11-Sep</td>
                 <td>15-Sep</td>
                 <td>17-Sep</td>
-                <td class="updated-cell">12-Sep 14:57</td>
+                <td class="updated-cell">12-Sep 23:33</td>
             </tr>
             
 
-            <tr class="status-upcoming">
+            <tr class="status-upcoming" data-status="U" data-rank="16" data-name="a-one steels" data-sub="-1" data-price="-1" data-gmp="0.0" data-profit="0.0">
                 <td class="rank-cell">16</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/a-one-steels-ipo/1611/" target="_blank" rel="noopener noreferrer">A-One Steels</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
                 <td>-</td>
@@ -544,7 +695,7 @@ tbody tr:hover td { filter: brightness(.985); }
             </tr>
             
 
-            <tr class="status-upcoming">
+            <tr class="status-upcoming" data-status="U" data-rank="17" data-name="sonaselection india" data-sub="-1" data-price="99.0" data-gmp="0.0" data-profit="0.0">
                 <td class="rank-cell">17</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/sonaselection-india-ipo/2059/" target="_blank" rel="noopener noreferrer">Sonaselection India</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div></td>
                 <td>-</td>
@@ -556,11 +707,11 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>21-Sep</td>
                 <td>22-Sep</td>
                 <td>24-Sep</td>
-                <td class="updated-cell">12-Sep 14:53</td>
+                <td class="updated-cell">12-Sep 23:36</td>
             </tr>
             
 
-            <tr class="status-other">
+            <tr class="status-other" data-status="C" data-rank="18" data-name="prasol chemicals" data-sub="3.47" data-price="676.0" data-gmp="0.0" data-profit="0.0">
                 <td class="rank-cell">18</td>
                 <td class="name-cell"><div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/prasol-chemicals-ipo/2030/" target="_blank" rel="noopener noreferrer">Prasol Chemicals</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://ipostatus.kfintech.com/" target="_blank" rel="noopener noreferrer">Allotted</a></div></div></td>
                 <td>3.47x</td>
@@ -572,12 +723,430 @@ tbody tr:hover td { filter: brightness(.985); }
                 <td>10-Sep</td>
                 <td>11-Sep</td>
                 <td>16-Sep</td>
-                <td class="updated-cell">12-Sep 15:01</td>
+                <td class="updated-cell">12-Sep 23:31</td>
             </tr>
             
                 </tbody>
             </table>
         </div>
+
+        <div class="cards" id="cards-body">
+            
+            <div class="ipo-card status-other" data-status="C" data-rank="1" data-name="lcc projects" data-sub="49.57" data-price="146.0" data-gmp="65.0" data-profit="6630.0">
+                <div class="card-top">
+                    <div class="card-rank"><span class="rank-medal">🥇</span></div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/lcc-projects-ipo/1648/" target="_blank" rel="noopener noreferrer">LCC Projects</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹6,630</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">49.57x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹146</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹65 <span class="gmp-percent">(44.52%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">102</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:29</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">9-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">15-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">17-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="2" data-name="pranav constructions" data-sub="126.34" data-price="124.0" data-gmp="50.0" data-profit="6000.0">
+                <div class="card-top">
+                    <div class="card-rank"><span class="rank-medal">🥈</span></div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/pranav-constructions-ipo/1662/" target="_blank" rel="noopener noreferrer">Pranav Constructions</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://ipostatus.kfintech.com/" target="_blank" rel="noopener noreferrer">Allotted</a></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹6,000</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">126.34x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹124</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹50 <span class="gmp-percent">(40.32%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">120</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:29</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">7-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">9-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">10-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">15-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="3" data-name="rentomojo" data-sub="72.89" data-price="404.0" data-gmp="160.0" data-profit="5920.0">
+                <div class="card-top">
+                    <div class="card-rank"><span class="rank-medal">🥉</span></div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/rentomojo-ipo/2231/" target="_blank" rel="noopener noreferrer">Rentomojo</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹5,920</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">72.89x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹404</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹160 <span class="gmp-percent">(39.60%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">37</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:37</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">9-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">15-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">17-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="4" data-name="kanohar electricals" data-sub="90.59" data-price="632.0" data-gmp="240.0" data-profit="5520.0">
+                <div class="card-top">
+                    <div class="card-rank">4</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/kanohar-electricals-ipo/2119/" target="_blank" rel="noopener noreferrer">Kanohar Electricals</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://in.mpms.mufg.com/Initial_Offer/public-issues.html" target="_blank" rel="noopener noreferrer">Allotted</a></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹5,520</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">90.59x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹632</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹240 <span class="gmp-percent">(37.97%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">23</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:28</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">8-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">10-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">16-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-open" data-status="O" data-rank="5" data-name="manika plastech" data-sub="1.49" data-price="43.0" data-gmp="15.0" data-profit="5220.0">
+                <div class="card-top">
+                    <div class="card-rank">5</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/manika-plastech-ipo/1806/" target="_blank" rel="noopener noreferrer">Manika Plastech</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-open">O</span></div></div>
+                        <span class="status-pill status-pill-open">Open</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹5,220</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">1.49x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹43</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹15 <span class="gmp-percent">(34.88%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">348</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:33</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">16-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">17-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">21-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-upcoming" data-status="U" data-rank="6" data-name="hero motors" data-sub="-1" data-price="84.0" data-gmp="24.0" data-profit="4272.0">
+                <div class="card-top">
+                    <div class="card-rank">6</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/hero-motors-ipo/1688/" target="_blank" rel="noopener noreferrer">Hero Motors</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div>
+                        <span class="status-pill status-pill-upcoming">Upcoming</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹4,272</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">-</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹84</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹24 <span class="gmp-percent">(28.57%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">178</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:31</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">16-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">18-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">21-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">23-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="7" data-name="glass wall systems" data-sub="81.65" data-price="182.0" data-gmp="51.0" data-profit="4182.0">
+                <div class="card-top">
+                    <div class="card-rank">7</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/glass-wall-systems-ipo/1879/" target="_blank" rel="noopener noreferrer">Glass Wall Systems</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://in.mpms.mufg.com/Initial_Offer/public-issues.html" target="_blank" rel="noopener noreferrer">Allotted</a></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹4,182</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">81.65x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹182</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹51 <span class="gmp-percent">(28.02%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">82</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:28</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">8-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">10-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">16-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="8" data-name="karamtara engineering" data-sub="66.01" data-price="254.0" data-gmp="69.0" data-profit="4071.0">
+                <div class="card-top">
+                    <div class="card-rank">8</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/karamtara-engineering-ipo/1622/" target="_blank" rel="noopener noreferrer">Karamtara Engineering</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹4,071</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">66.01x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹254</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹69 <span class="gmp-percent">(27.17%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">59</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:29</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">9-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">15-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">17-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-upcoming" data-status="U" data-rank="9" data-name="jindal supreme" data-sub="-1" data-price="93.0" data-gmp="25.0" data-profit="4025.0">
+                <div class="card-top">
+                    <div class="card-rank">9</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/jindal-supreme-ipo/2057/" target="_blank" rel="noopener noreferrer">Jindal Supreme</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div>
+                        <span class="status-pill status-pill-upcoming">Upcoming</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹4,025</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">-</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹93</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹25 <span class="gmp-percent">(26.88%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">161</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:31</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">16-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">18-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">21-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">23-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="10" data-name="steamhouse" data-sub="32.07" data-price="81.0" data-gmp="21.0" data-profit="3885.0">
+                <div class="card-top">
+                    <div class="card-rank">10</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/steamhouse-india-ipo/1823/" target="_blank" rel="noopener noreferrer">Steamhouse</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹3,885</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">32.07x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹81</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹21 <span class="gmp-percent">(25.93%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">185</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:32</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">9-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">15-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">17-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-upcoming" data-status="U" data-rank="11" data-name="ss retail" data-sub="-1" data-price="424.0" data-gmp="106.0" data-profit="3710.0">
+                <div class="card-top">
+                    <div class="card-rank">11</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/ss-retail-ipo/2076/" target="_blank" rel="noopener noreferrer">SS Retail</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div>
+                        <span class="status-pill status-pill-upcoming">Upcoming</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹3,710</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">-</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹424</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹106 <span class="gmp-percent">(25.00%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">35</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:36</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">16-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">18-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">21-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">23-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-upcoming" data-status="U" data-rank="12" data-name="nse" data-sub="-1" data-price="1785.0" data-gmp="208.0" data-profit="1664.0">
+                <div class="card-top">
+                    <div class="card-rank">12</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/nse-ipo/2305/" target="_blank" rel="noopener noreferrer">NSE</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div>
+                        <span class="status-pill status-pill-upcoming">Upcoming</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹1,664</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">-</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹1,785</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹208 <span class="gmp-percent">(11.65%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">8</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:30</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">17-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">21-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">22-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">24-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-open" data-status="O" data-rank="13" data-name="veegaland developers" data-sub="1.25" data-price="140.0" data-gmp="15.0" data-profit="1605.0">
+                <div class="card-top">
+                    <div class="card-rank">13</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/veegaland-developers-ipo/1601/" target="_blank" rel="noopener noreferrer">Veegaland Developers</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-open">O</span></div></div>
+                        <span class="status-pill status-pill-open">Open</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹1,605</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">1.25x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹140</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹15 <span class="gmp-percent">(10.71%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">107</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:29</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">10-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">15-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">16-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">18-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="14" data-name="asset reconstruction" data-sub="20.1" data-price="139.0" data-gmp="14.5" data-profit="1551.5">
+                <div class="card-top">
+                    <div class="card-rank">14</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/asset-reconstruction-ipo/1848/" target="_blank" rel="noopener noreferrer">Asset Reconstruction</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹1,552</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">20.1x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹139</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹14 <span class="gmp-percent">(10.43%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">107</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:31</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">9-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">15-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">17-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="15" data-name="manipal payment and identity solutions" data-sub="1.42" data-price="339.0" data-gmp="1.0" data-profit="44.0">
+                <div class="card-top">
+                    <div class="card-rank">15</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/manipal-payment-and-identity-solutions-ipo/1827/" target="_blank" rel="noopener noreferrer">Manipal Payment and Identity Solutions</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹44</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">1.42x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹339</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">₹1 <span class="gmp-percent">(0.29%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">44</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:33</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">9-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">15-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">17-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-upcoming" data-status="U" data-rank="16" data-name="a-one steels" data-sub="-1" data-price="-1" data-gmp="0.0" data-profit="0.0">
+                <div class="card-top">
+                    <div class="card-rank">16</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/a-one-steels-ipo/1611/" target="_blank" rel="noopener noreferrer">A-One Steels</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div>
+                        <span class="status-pill status-pill-upcoming">Upcoming</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹0</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">-</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">—</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">— <span class="gmp-percent"></span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">0</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 13:50</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">24-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">28-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">29-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">1-Oct</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-upcoming" data-status="U" data-rank="17" data-name="sonaselection india" data-sub="-1" data-price="99.0" data-gmp="0.0" data-profit="0.0">
+                <div class="card-top">
+                    <div class="card-rank">17</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/sonaselection-india-ipo/2059/" target="_blank" rel="noopener noreferrer">Sonaselection India</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-upcoming">U</span></div></div>
+                        <span class="status-pill status-pill-upcoming">Upcoming</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹0</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">-</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹99</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">— <span class="gmp-percent">(0.00%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">150</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:36</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">17-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">21-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">22-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">24-Sep</span></div>
+                </div>
+            </div>
+            
+
+            <div class="ipo-card status-other" data-status="C" data-rank="18" data-name="prasol chemicals" data-sub="3.47" data-price="676.0" data-gmp="0.0" data-profit="0.0">
+                <div class="card-top">
+                    <div class="card-rank">18</div>
+                    <div class="card-name-wrap">
+                        <div class="name-wrap"><div><a class="ipo-name" href="https://www.investorgain.com/gmp/prasol-chemicals-ipo/2030/" target="_blank" rel="noopener noreferrer">Prasol Chemicals</a></div><div class="badges"><span class="badge badge-ipo">IPO</span> <span class="badge badge-closed">C</span> <a class="badge badge-allotted" href="https://ipostatus.kfintech.com/" target="_blank" rel="noopener noreferrer">Allotted</a></div></div>
+                        <span class="status-pill status-pill-other">Closed</span>
+                    </div>
+                </div>
+                <div class="card-field profit-field"><span class="cf-label">Est. Profit (₹)</span><span class="cf-value profit-cell">₹0</span></div>
+                <div class="card-grid">
+                    <div class="card-field"><span class="cf-label">Sub</span><span class="cf-value">3.47x</span></div>
+                    <div class="card-field"><span class="cf-label">Price (₹)</span><span class="cf-value">₹676</span></div>
+                    <div class="card-field"><span class="cf-label">GMP</span><span class="cf-value gmp-value">— <span class="gmp-percent">(-2.22%)</span></span></div>
+                    <div class="card-field"><span class="cf-label">Lot</span><span class="cf-value">22</span></div>
+                    <div class="card-field"><span class="cf-label">Updated</span><span class="cf-value updated-cell">12-Sep 23:31</span></div>
+                    <div class="card-field"><span class="cf-label">Open</span><span class="cf-value">8-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Close</span><span class="cf-value">10-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Allot. Dt</span><span class="cf-value">11-Sep</span></div>
+                    <div class="card-field"><span class="cf-label">Listing</span><span class="cf-value">16-Sep</span></div>
+                </div>
+            </div>
+            
+        </div>
+        <div class="no-results" id="no-results">No IPOs match this filter.</div>
 
         <section class="summary">
             <div class="metric">
@@ -586,7 +1155,7 @@ tbody tr:hover td { filter: brightness(.985); }
             </div>
             <div class="metric">
                 <div class="metric-label">Highest Est. Profit / Lot</div>
-                <div class="metric-value">₹8,262</div>
+                <div class="metric-value">₹6,630</div>
             </div>
             <div class="metric">
                 <div class="metric-label">Lowest Est. Profit / Lot</div>
@@ -594,7 +1163,7 @@ tbody tr:hover td { filter: brightness(.985); }
             </div>
             <div class="metric">
                 <div class="metric-label">Average Est. Profit / Lot</div>
-                <div class="metric-value">₹3,262</div>
+                <div class="metric-value">₹3,239</div>
             </div>
         </section>
 
@@ -606,13 +1175,96 @@ tbody tr:hover td { filter: brightness(.985); }
     </main>
 
     <footer class="footer">
-        <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/PERU_Yash" target="_blank" rel="noopener noreferrer">Peru Yash</a></strong></div>
+        <div>Made with ❤️ by <strong><a style="text-decoration: none; color: inherit;" href="https://t.me/Darknoob87" target="_blank" rel="noopener noreferrer">Reetin Gupta</a></strong></div>
         <div>Data Source: InvestorGain · IPO GMP Live</div>
         <div>GMP is unofficial and may change at any time.</div>
     </footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
+// ---------- Filtering (status) + sorting, kept in sync across
+// the desktop table and the mobile card list ----------
+(function () {
+  var tbody = document.getElementById("table-body");
+  var cardsBody = document.getElementById("cards-body");
+  var noResults = document.getElementById("no-results");
+  var resultCount = document.getElementById("result-count");
+  var chips = document.querySelectorAll(".filter-chip");
+  var headers = document.querySelectorAll("th.sortable");
+
+  var activeFilter = "ALL";
+  var sortKey = null;
+  var sortDir = 1; // 1 = asc, -1 = desc
+
+  function matchesFilter(status) {
+    if (activeFilter === "ALL") return true;
+    if (activeFilter === "OTHER") return status !== "O" && status !== "U";
+    return status === activeFilter;
+  }
+
+  function applyFilter() {
+    var visibleCount = 0;
+    Array.prototype.forEach.call(tbody.children, function (tr) {
+      var show = matchesFilter(tr.getAttribute("data-status"));
+      tr.style.display = show ? "" : "none";
+      if (show) visibleCount++;
+    });
+    Array.prototype.forEach.call(cardsBody.children, function (card) {
+      var show = matchesFilter(card.getAttribute("data-status"));
+      card.style.display = show ? "" : "none";
+    });
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+    resultCount.textContent = visibleCount + " of " + tbody.children.length + " IPOs";
+  }
+
+  chips.forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      chips.forEach(function (c) { c.classList.remove("active"); });
+      chip.classList.add("active");
+      activeFilter = chip.getAttribute("data-filter");
+      applyFilter();
+    });
+  });
+
+  function sortRows(container, key, type, dir) {
+    var attr = "data-" + key;
+    var items = Array.prototype.slice.call(container.children);
+    items.sort(function (a, b) {
+      var av = a.getAttribute(attr);
+      var bv = b.getAttribute(attr);
+      if (type === "num") {
+        av = parseFloat(av);
+        bv = parseFloat(bv);
+        return (av - bv) * dir;
+      }
+      return av.localeCompare(bv) * dir;
+    });
+    items.forEach(function (el) { container.appendChild(el); });
+  }
+
+  headers.forEach(function (th) {
+    th.addEventListener("click", function () {
+      var key = th.getAttribute("data-sort");
+      var type = th.getAttribute("data-type");
+
+      if (sortKey === key) {
+        sortDir = -sortDir;
+      } else {
+        sortKey = key;
+        sortDir = 1;
+      }
+
+      headers.forEach(function (h) { h.classList.remove("sort-asc", "sort-desc"); });
+      th.classList.add(sortDir === 1 ? "sort-asc" : "sort-desc");
+
+      sortRows(tbody, key, type, sortDir);
+      sortRows(cardsBody, key, type, sortDir);
+    });
+  });
+
+  applyFilter();
+})();
+
 document.getElementById("dl-png").addEventListener("click", function () {
   var btn = this;
   btn.disabled = true;
