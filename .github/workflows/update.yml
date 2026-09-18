@@ -1,8 +1,6 @@
 name: Update IPO Pulse
 
 on:
-  schedule:
-
   workflow_dispatch:
 
 permissions:
