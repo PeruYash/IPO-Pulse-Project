@@ -2,35 +2,6 @@ name: Update IPO Pulse
 
 on:
   schedule:
-    # Every ~33 minutes
-    #
-    # Active time: 07:00 AM - 02:00 AM IST
-    # No runs:     02:00 AM - 07:00 AM IST
-    #
-    # GitHub Actions cron uses UTC.
-    # The schedule below follows a 33-minute sequence in UTC,
-    # corresponding to the desired daytime/evening IST window.
-
-    - cron: "30 1 * * *"
-    - cron: "3,36 2 * * *"
-    - cron: "9,42 3 * * *"
-    - cron: "15,48 4 * * *"
-    - cron: "21,54 5 * * *"
-    - cron: "27 6 * * *"
-    - cron: "0,33 7 * * *"
-    - cron: "6,39 8 * * *"
-    - cron: "12,45 9 * * *"
-    - cron: "18,51 10 * * *"
-    - cron: "24,57 11 * * *"
-    - cron: "30 12 * * *"
-    - cron: "3,36 13 * * *"
-    - cron: "9,42 14 * * *"
-    - cron: "15,48 15 * * *"
-    - cron: "21,54 16 * * *"
-    - cron: "27 17 * * *"
-    - cron: "0,33 18 * * *"
-    - cron: "6,39 19 * * *"
-    - cron: "12 20 * * *"
 
   workflow_dispatch:
 
