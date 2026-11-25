@@ -3,7 +3,7 @@ from __future__ import annotations
 import html
 import json
 import re
-import subprocess
+import time
 from datetime import datetime, date
 from pathlib import Path
 from urllib.parse import urljoin
@@ -20,7 +20,7 @@ OUTPUT_DIR = Path("output")
 HTML_PATH = OUTPUT_DIR / "index.html"
 PNG_PATH = OUTPUT_DIR / "ipo_gmp_latest.png"
 
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = (10, 60)  # (connection timeout, read timeout)
 USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -50,7 +50,6 @@ def financial_year(dt: datetime) -> str:
 def api_url(dt: datetime) -> str:
     return (
         f"{BASE_API}/{dt.month:02d}/{dt.year}/{financial_year(dt)}/0/all"
-        "?search="
     )
 
 
@@ -195,14 +194,52 @@ def parse_record(record: dict) -> dict:
     }
 
 
+
 def fetch_data(dt: datetime) -> list[dict]:
     url = api_url(dt)
-    response = requests.get(
-        url,
-        headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
-        timeout=REQUEST_TIMEOUT,
-    )
-    response.raise_for_status()
+
+    max_attempts = 4
+    retry_delays = (5, 10, 20)
+    retryable_status_codes = {429, 500, 502, 503, 504}
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = requests.get(
+                url,
+                headers={
+                    "User-Agent": USER_AGENT,
+                    "Accept": "application/json",
+                },
+                timeout=REQUEST_TIMEOUT,
+            )
+
+            if (
+                response.status_code in retryable_status_codes
+                and attempt < max_attempts
+            ):
+                delay = retry_delays[attempt - 1]
+                print(
+                    f"InvestorGain returned HTTP {response.status_code}. "
+                    f"Retrying in {delay} seconds "
+                    f"(attempt {attempt}/{max_attempts})..."
+                )
+                time.sleep(delay)
+                continue
+
+            response.raise_for_status()
+            break
+
+        except (requests.Timeout, requests.ConnectionError):
+            if attempt == max_attempts:
+                raise
+
+            delay = retry_delays[attempt - 1]
+            print(
+                f"InvestorGain request failed. "
+                f"Retrying in {delay} seconds "
+                f"(attempt {attempt}/{max_attempts})..."
+            )
+            time.sleep(delay)
 
     try:
         payload = response.json()
@@ -232,6 +269,7 @@ def fetch_data(dt: datetime) -> list[dict]:
         row["rank"] = rank
 
     return rows
+
 
 
 def badge_html(badge: dict) -> str:
